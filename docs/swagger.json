@@ -1,0 +1,60 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Github Searcher",
+    "version": "0.13.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:5000/"
+    }
+  ],
+  "tags": [
+    {
+      "name": "API"
+    }
+  ],
+  "paths": {
+    "/api/search": {
+      "get": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Search for github users, repositories, and ",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "",
+            "schema": {},
+            "description": ""
+          },
+          {
+            "in": "query",
+            "name": "",
+            "schema": {},
+            "description": ""
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/List"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "List": {
+        "properties": {}
+      }
+    }
+  }
+}
