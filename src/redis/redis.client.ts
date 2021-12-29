@@ -1,9 +1,13 @@
-import redis from 'redis';
+import * as redis from 'redis';
+import logger from '../logger';
 
-const { REDIS_URL } = process.env;
+const redisClient = redis.createClient();
 
-const client = redis.createClient({
-  url: REDIS_URL,
+redisClient.on('error', (err) => {
+  logger.error(`RedisError ${err}`);
 });
+redisClient.on('end', () => logger.info('RedisEnd'));
 
-export default client;
+redisClient.connect();
+
+export default redisClient;

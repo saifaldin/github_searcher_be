@@ -4,6 +4,7 @@ import GITHUB_CLIENT from './github.client';
 import { SearchTypes } from '../../controllers/enums/types.enum';
 import { ISearchBodyParams } from '../../controllers/interfaces/ISearchBodyParams';
 import { IGithubSearchParams } from './interfaces/IGithubSearchParams';
+import { Results } from '../../controllers/interfaces/ISearchResponseShape';
 
 const userResultsMapper = (result: any) => ({
   avatar: result.avatar_url,
@@ -22,16 +23,14 @@ const repoResultsMapper = (result: any) => ({
 });
 
 export default {
-  async searchGithub(bodyParams: ISearchBodyParams) {
+  async getRemainingRequests() {
+    return (await GITHUB_CLIENT.rateLimitDetails({}))
+      .data.resources.search.remaining;
+  },
+  async searchGithub(bodyParams: ISearchBodyParams): Promise<Results> {
     const {
       text, type, page, limit,
     } = bodyParams;
-
-    const remainingRequests = (await GITHUB_CLIENT.rateLimitDetails({}))
-      .data.resources.search.remaining;
-    if (remainingRequests === 0) {
-      return { searchResults: [], remainingRequests };
-    }
 
     const params: IGithubSearchParams = { q: text, page: page || 1, per_page: limit || 30 };
     const githubResponse: AxiosResponse = await GITHUB_CLIENT.search(type, { params });
@@ -46,6 +45,6 @@ export default {
       },
     );
 
-    return { searchResults, remainingRequests };
+    return searchResults;
   },
 };

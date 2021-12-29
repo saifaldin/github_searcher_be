@@ -1,11 +1,13 @@
 export interface ISearchResponseShape {
-  results: IUserSearchResponseShape[] | IRepoSearchResponseShape[],
+  results: Results,
   resultsCount: number,
   hasNextPage: boolean,
   rateLimit: {
     remaining: number,
   }
 }
+
+export type Results = IUserSearchResponseShape[] | IRepoSearchResponseShape[];
 
 interface IUserSearchResponseShape {
   avatar: string,

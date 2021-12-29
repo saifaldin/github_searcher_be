@@ -12,9 +12,9 @@ router
     try {
       const bodyParams: ISearchBodyParams = await searchBodySchema.validateAsync(req.body);
       const response: ISearchResponseShape = await apiService.search(bodyParams);
-      res.send(response);
+      return res.send(response);
     } catch (error) {
-      next(error);
+      return next(error);
     }
   });
 
