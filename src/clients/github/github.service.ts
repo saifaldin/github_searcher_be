@@ -58,7 +58,7 @@ export default {
     };
   },
   async getRemainingRequests() {
-    const { data: { resources: { search, core } } } = await GITHUB_CLIENT.rateLimitDetails({});
+    const { data: { resources: { search, core } } } = await GITHUB_CLIENT.rateLimitDetails('');
     return {
       search: search.remaining,
       core: core.remaining,
