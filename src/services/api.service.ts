@@ -1,31 +1,18 @@
 import githubService from '../clients/github/github.service';
-import { ISearchBodyParams } from '../controllers/interfaces/ISearchBodyParams';
+import { ISearchQueryParams } from '../controllers/interfaces/ISearchQueryParams';
 import { ISearchResponseShape, Results } from '../controllers/interfaces/ISearchResponseShape';
+import { IUserDetailsQueryParams } from '../controllers/interfaces/IUserDetailsQueryParams';
+import { IUserDetails, IUserDetailsResponseShape } from '../controllers/interfaces/IUserDetailsResponseShape';
 import redisClient from '../redis/redis.client';
 
-const cache = async (bodyParams: ISearchBodyParams, value: Results) => {
-  const {
-    type,
-    text,
-    page,
-    limit,
-  } = bodyParams;
+const cache = async (key: string, value: Results | IUserDetails) => {
   const threeHours = 3 * 60 * 60;
 
-  return redisClient.setEx(`${type}:${text}:${page}:${limit}`, threeHours, JSON.stringify(value));
+  return redisClient.setEx(key, threeHours, JSON.stringify(value));
 };
 
-const getCachedData = async (
-  bodyParams: ISearchBodyParams,
-): Promise<Results | null> => {
-  const {
-    type,
-    text,
-    page,
-    limit,
-  } = bodyParams;
-
-  const cachedData = await redisClient.get(`${type}:${text}:${page}:${limit}`);
+const getCachedData = async (key: string) => {
+  const cachedData = await redisClient.get(key);
 
   return JSON.parse((cachedData || null) as string);
 };
@@ -34,22 +21,39 @@ const setSearchResultResponse = (
   results: Results,
   limit: number,
   remainingRequests: number,
-): ISearchResponseShape => ({
-  hasNextPage: results.length === limit,
-  resultsCount: results.length,
+): ISearchResponseShape => (
+  {
+    hasNextPage: results.length === limit,
+    resultsCount: results.length,
+    rateLimit: {
+      remaining: remainingRequests,
+    },
+    results,
+  }
+);
+
+const setUserDetailsResponse = (
+  userDetails: IUserDetails,
+  remainingRequests: number,
+): IUserDetailsResponseShape => ({
+  ...userDetails,
   rateLimit: {
     remaining: remainingRequests,
   },
-  results,
 });
 
 export default {
-  async search(bodyParams: ISearchBodyParams): Promise<ISearchResponseShape> {
-    const { limit } = bodyParams;
+  async search(queryParams: ISearchQueryParams): Promise<ISearchResponseShape> {
+    const {
+      type,
+      text,
+      page,
+      limit,
+    } = queryParams;
 
-    const remainingRequests = await githubService.getRemainingRequests();
+    const { search: remainingRequests } = await githubService.getRemainingRequests();
 
-    const cachedResults = await getCachedData(bodyParams);
+    const cachedResults = await getCachedData(`${type}:${text}:${page}:${limit}`);
     if (cachedResults) {
       return setSearchResultResponse(cachedResults, limit, remainingRequests);
     }
@@ -58,10 +62,33 @@ export default {
       return setSearchResultResponse([], limit, remainingRequests);
     }
 
-    const results = await githubService.searchGithub(bodyParams);
+    const results = await githubService.searchGithub(queryParams);
 
-    cache(bodyParams, results);
+    cache(`${type}:${text}:${page}:${limit}`, results);
 
-    return setSearchResultResponse(results, limit, remainingRequests);
+    return setSearchResultResponse(results, limit, remainingRequests - 1);
+  },
+  async userDetails(queryParams: IUserDetailsQueryParams) {
+    const { user } = queryParams;
+
+    const { core: remainingRequests } = await githubService.getRemainingRequests();
+
+    const cachedUser = await getCachedData(user);
+    if (cachedUser) {
+      return setUserDetailsResponse(cachedUser, remainingRequests);
+    }
+
+    if (remainingRequests === 0) {
+      return setUserDetailsResponse({} as IUserDetails, remainingRequests);
+    }
+
+    const userDetails = await githubService.getUserDetails(queryParams);
+
+    cache(user, userDetails);
+
+    return setUserDetailsResponse(userDetails, remainingRequests - 1);
+  },
+  async clearCache(): Promise<void> {
+    await redisClient.flushAll();
   },
 };

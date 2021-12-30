@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { ErrorRequestHandler } from 'express';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
 import cors from 'cors';
@@ -24,5 +24,23 @@ app.use('/', (req, _res, next) => {
 });
 
 app.use('/api', router);
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
+  let { status } = err;
+  const { message, stack } = err;
+
+  logger.error(`${message} ${stack}`);
+
+  if (stack.includes('ValidationError')) {
+    status = 400;
+  }
+
+  const resBody = { error: { message: message.replace(/["]+/g, '') } };
+
+  return res.status(status || 500).send(resBody);
+};
+
+app.use(errorHandler);
 
 export default app;

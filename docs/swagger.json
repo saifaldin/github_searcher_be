@@ -1,14 +1,9 @@
 {
-  "openapi": "3.0.0",
+  "openapi": "3.0.2",
   "info": {
     "title": "Github Searcher",
-    "version": "0.13.0"
+    "version": "0.0.0"
   },
-  "servers": [
-    {
-      "url": "http://localhost:5000/"
-    }
-  ],
   "tags": [
     {
       "name": "API"
@@ -20,31 +15,99 @@
         "tags": [
           "API"
         ],
-        "summary": "Search for github users, repositories, and ",
+        "summary": "Search for github users and repositories",
+        "operationId": "search",
         "parameters": [
           {
             "in": "query",
-            "name": "",
-            "schema": {},
-            "description": ""
+            "name": "type",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "users",
+                "repositories"
+              ]
+            },
+            "description": "Type of resource you are looking for. Can be users, or repositories"
           },
           {
             "in": "query",
-            "name": "",
-            "schema": {},
-            "description": ""
+            "name": "text",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Search query text"
           }
         ],
         "responses": {
           "200": {
-            "description": "successful operation",
+            "description": "Successful operation",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/List"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ListSearchResults"
+                  }
                 }
               }
             }
+          },
+          "400": {
+            "description": "Validation Error"
+          }
+        }
+      }
+    },
+    "/api/user-details": {
+      "get": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Gets user details not found on normal search results",
+        "operationId": "userDetails",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "user",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful operation",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/UserDetailsResponse"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid status value"
+          }
+        }
+      }
+    },
+    "/api/clear-cache": {
+      "post": {
+        "tags": [
+          "API"
+        ],
+        "summary": "Clears all cached data",
+        "operationId": "clearCache",
+        "responses": {
+          "200": {
+            "description": "Successful operation"
           }
         }
       }
@@ -52,8 +115,93 @@
   },
   "components": {
     "schemas": {
-      "List": {
-        "properties": {}
+      "ListSearchResults": {
+        "properties": {
+          "results": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/UserSearchResponse"
+                },
+                {
+                  "$ref": "#/components/schemas/RepoSearchResponse"
+                }
+              ]
+            }
+          },
+          "resultsCount": {
+            "type": "number"
+          },
+          "hasNextPage": {
+            "type": "boolean"
+          },
+          "rateLimit": {
+            "type": "object",
+            "properties": {
+              "remaining": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      "UserDetailsResponse": {
+        "properties": {
+          "location": {
+            "type": "string",
+            "example": "https://exampleurl.foo"
+          },
+          "followers": {
+            "type": "number",
+            "example": 99
+          },
+          "publicRepos": {
+            "type": "number",
+            "example": 99
+          },
+          "rateLimit": {
+            "type": "object",
+            "properties": {
+              "remaining": {
+                "type": "number"
+              }
+            }
+          }
+        }
+      },
+      "UserSearchResponse": {
+        "properties": {
+          "avatar": {
+            "type": "string",
+            "example": "https://exampleurl.foo"
+          },
+          "name": {
+            "type": "string"
+          },
+          "profileUrl": {
+            "type": "string"
+          }
+        }
+      },
+      "RepoSearchResponse": {
+        "properties": {
+          "userDetails": {
+            "$ref": "#/components/schemas/UserSearchResponse"
+          },
+          "name": {
+            "type": "string",
+            "example": "name"
+          },
+          "stars": {
+            "type": "number",
+            "example": 2
+          },
+          "repoUrl": {
+            "type": "string",
+            "example": "https://exampleurl.foo"
+          }
+        }
       }
     }
   }
