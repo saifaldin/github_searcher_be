@@ -22,6 +22,7 @@ const repoResultsMapper = (result: any) => ({
   },
   name: result.name,
   stars: result.stargazers_count,
+  repoUrl: result.html_url,
 });
 
 export default {
