@@ -7,8 +7,8 @@ dotenv.config({ path: path.join(__dirname, '..', '.env') });
 
 const { PORT } = process.env;
 
-app.listen(PORT, () => {
-  logger.info(`Listening on port ${PORT}`);
+app.listen(PORT || 5000, () => {
+  logger.info(`Listening on port ${PORT || 5000}`);
 });
 
 process.on('uncaughtException', (error) => {
