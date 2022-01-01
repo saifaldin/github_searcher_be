@@ -31,7 +31,7 @@ export default {
       text, type, page, limit,
     } = queryParams;
 
-    const params: IGithubSearchParams = { q: text, page: page || 1, per_page: limit || 30 };
+    const params: IGithubSearchParams = { q: text, page, per_page: limit };
     const githubResponse: AxiosResponse = await GITHUB_CLIENT.search(type, { params });
     let { data: { items: searchResults } } = githubResponse;
 
