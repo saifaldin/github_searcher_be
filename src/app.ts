@@ -16,7 +16,7 @@ app.use(rateLimit({
 }));
 app.use(cors());
 app.use(express.json());
-app.use('/docs', SwaggerUI.serve, SwaggerUI.setup(require('../docs/swagger.json')));
+app.use('/api/docs', SwaggerUI.serve, SwaggerUI.setup(require('../docs/swagger.json')));
 
 app.use('/', (req, _res, next) => {
   logger.info(`${req.method} ${req.url}`);
